@@ -1,0 +1,29 @@
+feed:
+  url: "https://portal.mytum.de/schwarzesbrett/hiwi_stellen/RSS"
+  request_timeout_seconds: 30
+
+matching:
+  include_any: []
+  include_all: []
+  exclude_any: []
+  title_include_any: []
+  regex_any: []
+
+  # Optional weighted relevance scoring.
+  # Example:
+  # weighted_terms:
+  #   python: 5
+  #   machine learning: 4
+  #   softwareentwicklung: 3
+  weighted_terms: {}
+  minimum_score: 0
+
+notifications:
+  username: "TUM Job Watcher"
+  mention: ""
+  max_description_characters: 900
+
+state:
+  path: "data/state.json"
+  first_run_mode: "mark_seen"
+  retention_days: 180
