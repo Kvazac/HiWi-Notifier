@@ -13,7 +13,7 @@ matching:
 
   types: []
 
-  require_student_eligible: true
+  require_student_eligible: false
 
 notifications:
   username: "TUM Living Watcher"
