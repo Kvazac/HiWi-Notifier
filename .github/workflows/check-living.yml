@@ -32,7 +32,7 @@ jobs:
 
       - name: Check TUM Living
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_LIVING }}
         run: python -m living.main
 
       - name: Persist housing state
