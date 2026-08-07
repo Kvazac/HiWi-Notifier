@@ -1,3 +1,7 @@
+[![Check TUM student jobs](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-jobs.yml/badge.svg)](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-jobs.yml)
+
+
+
 # TUM HiWi Discord Notifier
 
 Checks the official TUM student-job RSS feed once per hour, applies configurable filters, and posts new matching listings to Discord.
