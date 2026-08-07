@@ -1,5 +1,5 @@
 [![Check TUM student jobs](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-jobs.yml/badge.svg)](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-jobs.yml)
-
+[![Check TUM Living](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-living.yml/badge.svg)](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-living.yml)
 
 
 # TUM HiWi Discord Notifier
