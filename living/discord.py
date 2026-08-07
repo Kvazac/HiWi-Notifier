@@ -41,3 +41,38 @@ def send_listing(webhook_url: str, listing: HousingListing, result: MatchResult,
         response.raise_for_status()
     except requests.RequestException as exc:
         raise DiscordError(f"Discord notification failed: {exc}") from exc
+
+def send_test(webhook_url: str, username: str = "TUM Living Watcher") -> None:
+    payload = {
+        "username": username,
+        "embeds": [
+            {
+                "title": "🧪 TUM Living notifier test",
+                "description": "The TUM Living Discord notifier is configured correctly.",
+                "fields": [
+                    {
+                        "name": "Status",
+                        "value": "✅ Discord delivery successful",
+                        "inline": False,
+                    },
+                    {
+                        "name": "Current filters",
+                        "value": "Munich · ≤ €1,200 · student eligible",
+                        "inline": False,
+                    },
+                ],
+                "footer": {
+                    "text": "This is only a test — no real listing was processed."
+                },
+            }
+        ],
+        "allowed_mentions": {"parse": []},
+    }
+
+    response = requests.post(
+        webhook_url,
+        params={"wait": "true"},
+        json=payload,
+        timeout=30,
+    )
+    response.raise_for_status()
