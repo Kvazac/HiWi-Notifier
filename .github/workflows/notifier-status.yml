@@ -65,10 +65,13 @@ jobs:
           }
 
           request = urllib.request.Request(
-              webhook + "?wait=true",
-              data=json.dumps(payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"},
-              method="POST",
+          webhook + "?wait=true",
+           data=json.dumps(payload).encode("utf-8"),
+          headers={
+            "Content-Type": "application/json",
+            "User-Agent": "TUM-Notifier-Monitor/1.0",
+          },
+          method="POST",
           )
 
           with urllib.request.urlopen(request, timeout=30) as response:
@@ -180,10 +183,13 @@ jobs:
           }
 
           request = urllib.request.Request(
-              webhook + "?wait=true",
-              data=json.dumps(payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"},
-              method="POST",
+          webhook + "?wait=true",
+          data=json.dumps(payload).encode("utf-8"),
+          headers={
+            "Content-Type": "application/json",
+            "User-Agent": "TUM-Notifier-Monitor/1.0",
+          },
+            method="POST",
           )
 
           with urllib.request.urlopen(request, timeout=30) as response:
