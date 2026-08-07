@@ -1,5 +1,5 @@
 feed:
-  url: "https://portal.mytum.de/schwarzesbrett/hiwi_stellen/RSS"
+  url: "https://portal.mytum.de/schwarzesbrett/hiwi_stellen/asRss"
   request_timeout_seconds: 30
 
 matching:
