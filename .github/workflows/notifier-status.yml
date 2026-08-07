@@ -5,6 +5,7 @@ on:
     # Daily heartbeat at 07:40 UTC
     - cron: "40 7 * * *"
 
+  # A manual run acts as the status notification test.
   workflow_dispatch:
 
   workflow_run:
@@ -36,48 +37,56 @@ jobs:
           BRANCH: ${{ github.event.workflow_run.head_branch }}
           RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
         run: |
-          python3 - <<'PY'
+          python3 - <<'PY' > /tmp/discord-payload.json
           import json
           import os
-          import urllib.request
-
-          webhook = os.environ["DISCORD_WEBHOOK_URL"]
-          workflow = os.environ["WORKFLOW_NAME"]
-          conclusion = os.environ["CONCLUSION"]
-          run_url = os.environ["RUN_URL"]
-          branch = os.environ["BRANCH"]
-          run_number = os.environ["RUN_NUMBER"]
 
           payload = {
               "username": "TUM Notifier Monitor",
               "embeds": [{
                   "title": "🔴 TUM notifier failure",
-                  "description": f"**{workflow}** did not complete successfully.",
+                  "description": (
+                      f"**{os.environ['WORKFLOW_NAME']}** "
+                      "did not complete successfully."
+                  ),
                   "fields": [
-                      {"name": "Status", "value": conclusion, "inline": True},
-                      {"name": "Run", "value": f"#{run_number}", "inline": True},
-                      {"name": "Branch", "value": branch or "unknown", "inline": True},
-                      {"name": "GitHub Actions", "value": f"[Open failed run]({run_url})", "inline": False},
+                      {
+                          "name": "Status",
+                          "value": os.environ["CONCLUSION"],
+                          "inline": True,
+                      },
+                      {
+                          "name": "Run",
+                          "value": f"#{os.environ['RUN_NUMBER']}",
+                          "inline": True,
+                      },
+                      {
+                          "name": "Branch",
+                          "value": os.environ["BRANCH"] or "unknown",
+                          "inline": True,
+                      },
+                      {
+                          "name": "GitHub Actions",
+                          "value": (
+                              f"[Open failed run]"
+                              f"({os.environ['RUN_URL']})"
+                          ),
+                          "inline": False,
+                      },
                   ],
                   "footer": {"text": "Immediate failure alert"},
               }],
               "allowed_mentions": {"parse": []},
           }
 
-          request = urllib.request.Request(
-          webhook + "?wait=true",
-           data=json.dumps(payload).encode("utf-8"),
-          headers={
-            "Content-Type": "application/json",
-            "User-Agent": "TUM-Notifier-Monitor/1.0",
-          },
-          method="POST",
-          )
-
-          with urllib.request.urlopen(request, timeout=30) as response:
-              if response.status >= 300:
-                  raise RuntimeError(f"Discord returned HTTP {response.status}")
+          print(json.dumps(payload))
           PY
+
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: TUM-Notifier-Monitor/1.0" \
+            --data-binary @/tmp/discord-payload.json \
+            "${DISCORD_WEBHOOK_URL}?wait=true"
 
   daily-heartbeat:
     if: >-
@@ -87,21 +96,18 @@ jobs:
     timeout-minutes: 3
 
     steps:
-      - name: Build and send combined Discord heartbeat
+      - name: Build combined status payload
         env:
           GH_TOKEN: ${{ github.token }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_STATUS }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          python3 - <<'PY'
+          python3 - <<'PY' > /tmp/discord-payload.json
           import json
           import os
           import subprocess
-          import urllib.request
           from datetime import datetime, timezone
 
           repo = os.environ["REPOSITORY"]
-          webhook = os.environ["DISCORD_WEBHOOK_URL"]
 
           workflows = [
               ("🎓", "HiWi notifier", "check-jobs.yml"),
@@ -110,8 +116,10 @@ jobs:
 
           def latest_run(workflow_file):
               cmd = [
-                  "gh", "api",
-                  f"/repos/{repo}/actions/workflows/{workflow_file}/runs?per_page=1"
+                  "gh",
+                  "api",
+                  f"/repos/{repo}/actions/workflows/"
+                  f"{workflow_file}/runs?per_page=1",
               ]
               raw = subprocess.check_output(cmd, text=True)
               payload = json.loads(raw)
@@ -121,8 +129,13 @@ jobs:
           def pretty_time(value):
               if not value:
                   return "Unknown"
-              dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-              return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+              dt = datetime.fromisoformat(
+                  value.replace("Z", "+00:00")
+              )
+              return dt.astimezone(timezone.utc).strftime(
+                  "%Y-%m-%d %H:%M UTC"
+              )
 
           fields = []
           all_healthy = True
@@ -139,7 +152,11 @@ jobs:
                   })
                   continue
 
-              conclusion = run.get("conclusion") or run.get("status") or "unknown"
+              conclusion = (
+                  run.get("conclusion")
+                  or run.get("status")
+                  or "unknown"
+              )
               run_url = run.get("html_url", "")
               created_at = pretty_time(run.get("created_at"))
               event = run.get("event", "unknown")
@@ -148,20 +165,20 @@ jobs:
               all_healthy = all_healthy and healthy
               marker = "🟢" if healthy else "🔴"
 
-              value = (
-                  f"{marker} **{conclusion.upper()}**\n"
-                  f"Last run: {created_at}\n"
-                  f"Trigger: `{event}`\n"
-                  f"[Open run]({run_url})"
-              )
-
               fields.append({
                   "name": f"{icon} {label}",
-                  "value": value,
+                  "value": (
+                      f"{marker} **{conclusion.upper()}**\n"
+                      f"Last run: {created_at}\n"
+                      f"Trigger: `{event}`\n"
+                      f"[Open run]({run_url})"
+                  ),
                   "inline": False,
               })
 
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+          now = datetime.now(timezone.utc).strftime(
+              "%Y-%m-%d %H:%M UTC"
+          )
 
           payload = {
               "username": "TUM Notifier Monitor",
@@ -174,25 +191,28 @@ jobs:
                   "description": (
                       "Both monitoring workflows are healthy."
                       if all_healthy
-                      else "At least one monitoring workflow needs attention."
+                      else (
+                          "At least one monitoring workflow "
+                          "needs attention."
+                      )
                   ),
                   "fields": fields,
-                  "footer": {"text": f"Heartbeat generated {now}"},
+                  "footer": {
+                      "text": f"Heartbeat generated {now}"
+                  },
               }],
               "allowed_mentions": {"parse": []},
           }
 
-          request = urllib.request.Request(
-          webhook + "?wait=true",
-          data=json.dumps(payload).encode("utf-8"),
-          headers={
-            "Content-Type": "application/json",
-            "User-Agent": "TUM-Notifier-Monitor/1.0",
-          },
-            method="POST",
-          )
-
-          with urllib.request.urlopen(request, timeout=30) as response:
-              if response.status >= 300:
-                  raise RuntimeError(f"Discord returned HTTP {response.status}")
+          print(json.dumps(payload))
           PY
+
+      - name: Send combined Discord heartbeat
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_STATUS }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: TUM-Notifier-Monitor/1.0" \
+            --data-binary @/tmp/discord-payload.json \
+            "${DISCORD_WEBHOOK_URL}?wait=true"
