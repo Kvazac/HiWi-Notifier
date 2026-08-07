@@ -12,6 +12,29 @@ def load_config(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle) or {}
 
+def main() -> int:
+    args = parse_args()
+    config = load_config(Path(args.config))
+
+    if args.test_notification:
+        webhook_url = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
+
+        if not webhook_url:
+            raise RuntimeError("DISCORD_WEBHOOK_URL is required")
+
+        send_test(
+            webhook_url,
+            str(
+                config.get("notifications", {}).get(
+                    "username",
+                    "TUM Living Watcher",
+                )
+            ),
+        )
+
+        print("TUM Living test notification sent.")
+        return 0
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="TUM Living Discord notifier")
     parser.add_argument("--config", default="living-config.yml")
