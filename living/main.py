@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 import yaml
 from .client import LivingClient
-from .discord import send_listing
+from .discord import send_listing, send_test
 from .matcher import matches
 from .state import load_state, mark_seen, prune, save_state
 
@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="TUM Living Discord notifier")
     parser.add_argument("--config", default="living-config.yml")
     parser.add_argument("--dry-run", action="store_true")
-    return parser.parse_args()
+    return parser.parse_args(parser.add_argument("--test-notification", action="store_true"))
 
 def main() -> int:
     args = parse_args()
