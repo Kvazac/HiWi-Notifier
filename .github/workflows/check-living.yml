@@ -40,13 +40,13 @@ jobs:
       - name: Send test notification
         if: ${{ inputs.send_test_notification == true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_LIVING }}
         run: python -m living.main --test-notification
 
       - name: Check TUM Living
         if: ${{ inputs.send_test_notification != true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_LIVING }}
         run: python -m living.main
 
       - name: Persist housing state
