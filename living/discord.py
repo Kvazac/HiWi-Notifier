@@ -48,7 +48,11 @@ def send_listing(
         "embeds": [
             {
                 "title": f"🏠 {title}",
-                "url": "https://living.tum.de/listings?viewMode=list",
+                listing_url = (
+    f"https://living.tum.de/listings/{listing.uuid}"
+    if listing.uuid
+    else "https://living.tum.de/listings?viewMode=list"
+)
                 "description": (
                     f"New matching TUM Living listing "
                     f"(ID {listing.listing_id})."
@@ -93,14 +97,16 @@ def send_test(
     webhook_url: str,
     username: str = "TUM Living Watcher",
 ) -> None:
-    payload = {
-        "username": username,
-        "embeds": [
-            {
-                "title": "🧪 TUM Living notifier test",
-                "description": (
-                    "The TUM Living Discord notifier is configured correctly."
-                ),
+payload = {
+    "username": str(config.get("username", "TUM Living Watcher")),
+    "embeds": [
+        {
+            "title": f"🏠 {title}",
+            "url": listing_url,
+            "description": (
+                f"New matching TUM Living listing "
+                f"(ID {listing.listing_id})."
+            ),
                 "fields": [
                     {
                         "name": "Status",
