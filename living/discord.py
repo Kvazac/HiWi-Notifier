@@ -20,7 +20,11 @@ def _size(value: float | None) -> str:
     return "Unknown" if value is None else f"{float(value):g} m²"
 
 
-def _post(webhook_url: str, payload: dict[str, Any], error_label: str) -> None:
+def _post(
+    webhook_url: str,
+    payload: dict[str, Any],
+    error_label: str,
+) -> None:
     try:
         response = requests.post(
             webhook_url,
@@ -39,20 +43,37 @@ def send_listing(
     result: MatchResult,
     config: dict[str, Any],
 ) -> None:
-    title = listing.type.replace("_", " ").title() or "TUM Living listing"
-    district = listing.district.replace("_", " ").title() if listing.district else ""
-    location = ", ".join(part for part in [listing.city, district] if part)
+    title = (
+        listing.type.replace("_", " ").title()
+        or "TUM Living listing"
+    )
+
+    district = (
+        listing.district.replace("_", " ").title()
+        if listing.district
+        else ""
+    )
+
+    location = ", ".join(
+        part
+        for part in [listing.city, district]
+        if part
+    )
+
+    listing_url = (
+        f"https://living.tum.de/listings/{listing.uuid}"
+        if listing.uuid
+        else "https://living.tum.de/listings?viewMode=list"
+    )
 
     payload = {
-        "username": str(config.get("username", "TUM Living Watcher")),
+        "username": str(
+            config.get("username", "TUM Living Watcher")
+        ),
         "embeds": [
             {
                 "title": f"🏠 {title}",
-                listing_url = (
-    f"https://living.tum.de/listings/{listing.uuid}"
-    if listing.uuid
-    else "https://living.tum.de/listings?viewMode=list"
-)
+                "url": listing_url,
                 "description": (
                     f"New matching TUM Living listing "
                     f"(ID {listing.listing_id})."
@@ -70,7 +91,10 @@ def send_listing(
                     },
                     {
                         "name": "Available from",
-                        "value": listing.available_from or "Unknown",
+                        "value": (
+                            listing.available_from
+                            or "Unknown"
+                        ),
                         "inline": True,
                     },
                     {
@@ -80,51 +104,74 @@ def send_listing(
                     },
                     {
                         "name": "Matched because",
-                        "value": ", ".join(result.reasons)[:1024],
+                        "value": ", ".join(
+                            result.reasons
+                        )[:1024],
                         "inline": False,
                     },
                 ],
-                "footer": {"text": "TUM Living"},
+                "footer": {
+                    "text": "TUM Living"
+                },
             }
         ],
-        "allowed_mentions": {"parse": []},
+        "allowed_mentions": {
+            "parse": []
+        },
     }
 
-    _post(webhook_url, payload, "Discord housing notification failed")
+    _post(
+        webhook_url,
+        payload,
+        "Discord housing notification failed",
+    )
 
 
 def send_test(
     webhook_url: str,
     username: str = "TUM Living Watcher",
 ) -> None:
-payload = {
-    "username": str(config.get("username", "TUM Living Watcher")),
-    "embeds": [
-        {
-            "title": f"🏠 {title}",
-            "url": listing_url,
-            "description": (
-                f"New matching TUM Living listing "
-                f"(ID {listing.listing_id})."
-            ),
+    payload = {
+        "username": username,
+        "embeds": [
+            {
+                "title": "🧪 TUM Living notifier test",
+                "description": (
+                    "The TUM Living Discord notifier "
+                    "is configured correctly."
+                ),
                 "fields": [
                     {
                         "name": "Status",
-                        "value": "✅ Discord delivery successful",
+                        "value": (
+                            "✅ Discord delivery successful"
+                        ),
                         "inline": False,
                     },
                     {
                         "name": "Current filters",
-                        "value": "Munich · ≤ €1,200 · student eligible",
+                        "value": (
+                            "Munich · ≤ €1,200 · "
+                            "student eligible"
+                        ),
                         "inline": False,
                     },
                 ],
                 "footer": {
-                    "text": "Test only — no listing or state was processed."
+                    "text": (
+                        "Test only — no listing or "
+                        "state was processed."
+                    )
                 },
             }
         ],
-        "allowed_mentions": {"parse": []},
+        "allowed_mentions": {
+            "parse": []
+        },
     }
 
-    _post(webhook_url, payload, "Discord housing test notification failed")
+    _post(
+        webhook_url,
+        payload,
+        "Discord housing test notification failed",
+    )
