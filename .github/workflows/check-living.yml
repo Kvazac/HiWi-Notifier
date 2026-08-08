@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+      send_test_listing:
+        description: "Fetch and send a real matching listing as a test"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -44,13 +49,23 @@ jobs:
         run: python -m living.main --test-notification
 
       - name: Check TUM Living
-        if: ${{ inputs.send_test_notification != true }}
+        if: >-
+          ${{ inputs.send_test_notification != true &&
+            inputs.send_test_listing != true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_LIVING }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python -m living.main
+        
+      - name: Send real listing test
+        if: ${{ inputs.send_test_listing == true }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python -m living.main --test-listing
 
       - name: Persist housing state
-        if: ${{ inputs.send_test_notification != true }}
+        if: >-
+          ${{ inputs.send_test_notification != true &&
+          inputs.send_test_listing != true }}
         run: |
           if git diff --quiet -- data/living-state.json; then
             echo "No housing state changes."
