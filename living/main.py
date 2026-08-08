@@ -24,6 +24,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="living-config.yml")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--test-notification", action="store_true")
+    parser.add_argument(
+    "--test-listing",
+    action="store_true",
+    help="Fetch newest listing and send it as a test without changing state",
+)
     return parser.parse_args()
 
 
