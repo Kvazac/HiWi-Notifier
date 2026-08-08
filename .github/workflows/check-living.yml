@@ -53,13 +53,13 @@ jobs:
           ${{ inputs.send_test_notification != true &&
             inputs.send_test_listing != true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_LIVING }}
         run: python -m living.main
         
       - name: Send real listing test
         if: ${{ inputs.send_test_listing == true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_LIVING }}
         run: python -m living.main --test-listing
 
       - name: Persist housing state
