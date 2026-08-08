@@ -10,11 +10,14 @@ matching:
   regex_any: []
 
   # Optional weighted relevance scoring.
+  #
   # Example:
+  #
   # weighted_terms:
   #   python: 5
   #   machine learning: 4
   #   softwareentwicklung: 3
+
   weighted_terms: {}
   minimum_score: 0
 
@@ -22,58 +25,6 @@ notifications:
   username: "TUM Job Watcher"
   mention: ""
   max_description_characters: 900
-
-if args.test_listing:
-    webhook_url = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
-
-    if not webhook_url:
-        raise RuntimeError("DISCORD_WEBHOOK_URL is required")
-
-    api = config.get("api", {})
-
-    client = LivingClient(
-        str(api.get("base_url", "https://living.tum.de")),
-        int(api.get("timeout_seconds", 30)),
-    )
-
-    listings = client.fetch_listings(10)
-
-    if not listings:
-        raise RuntimeError("TUM Living returned no listings")
-
-    # Pick the newest listing that matches your configured filters.
-    test_listing = None
-    test_result = None
-
-    for listing in listings:
-        result = matches(
-            listing,
-            config.get("matching", {}),
-        )
-
-        if result.matched:
-            test_listing = listing
-            test_result = result
-            break
-
-    if test_listing is None or test_result is None:
-        raise RuntimeError(
-            "No current listing matched your configured filters"
-        )
-
-    send_listing(
-        webhook_url,
-        test_listing,
-        test_result,
-        config.get("notifications", {}),
-    )
-
-    print(
-        f"Test listing sent: "
-        f"{test_listing.listing_id} / {test_listing.uuid}"
-    )
-
-    return 0
 
 state:
   path: "data/state.json"
