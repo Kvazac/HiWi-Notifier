@@ -46,13 +46,13 @@ jobs:
       - name: Send test notification
         if: ${{ inputs.send_test_notification == true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_ISAR }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python -m isar.main --test-notification
 
       - name: Send real listing test
         if: ${{ inputs.send_test_listing == true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_ISAR }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python -m isar.main --test-listing
 
       - name: Check Isar Aerospace
@@ -60,7 +60,7 @@ jobs:
           ${{ inputs.send_test_notification != true &&
               inputs.send_test_listing != true }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_ISAR }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python -m isar.main
 
       - name: Persist Isar state
