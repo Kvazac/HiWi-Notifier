@@ -2,7 +2,7 @@ name: Check Isar Aerospace student jobs
 
 on:
   schedule:
-    - cron: "11,41 * * * *"
+    - cron: "30 * * * *"
 
   workflow_dispatch:
     inputs:
