@@ -1,17 +1,19 @@
-name: TUM notifier status
+name: Notifier status
 
 on:
   schedule:
     # Daily heartbeat at 07:40 UTC
     - cron: "40 7 * * *"
 
-  # A manual run acts as the status notification test.
+  # Manual run = heartbeat/status test.
   workflow_dispatch:
 
+  # Trigger immediately whenever any monitored workflow completes.
   workflow_run:
     workflows:
       - "Check TUM student jobs"
       - "Check TUM Living"
+      - "Check Isar Aerospace student jobs"
     types:
       - completed
 
@@ -24,6 +26,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion != 'success'
+
     runs-on: ubuntu-latest
     timeout-minutes: 3
 
@@ -36,15 +39,16 @@ jobs:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
           RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+
         run: |
           python3 - <<'PY' > /tmp/discord-payload.json
           import json
           import os
 
           payload = {
-              "username": "TUM Notifier Monitor",
+              "username": "Notifier Monitor",
               "embeds": [{
-                  "title": "🔴 TUM notifier failure",
+                  "title": "🔴 Notifier failure",
                   "description": (
                       f"**{os.environ['WORKFLOW_NAME']}** "
                       "did not complete successfully."
@@ -74,9 +78,13 @@ jobs:
                           "inline": False,
                       },
                   ],
-                  "footer": {"text": "Immediate failure alert"},
+                  "footer": {
+                      "text": "Immediate failure alert"
+                  },
               }],
-              "allowed_mentions": {"parse": []},
+              "allowed_mentions": {
+                  "parse": []
+              },
           }
 
           print(json.dumps(payload))
@@ -84,7 +92,7 @@ jobs:
 
           curl --fail-with-body --silent --show-error \
             -H "Content-Type: application/json" \
-            -H "User-Agent: TUM-Notifier-Monitor/1.0" \
+            -H "User-Agent: Notifier-Monitor/1.0" \
             --data-binary @/tmp/discord-payload.json \
             "${DISCORD_WEBHOOK_URL}?wait=true"
 
@@ -92,6 +100,7 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch'
+
     runs-on: ubuntu-latest
     timeout-minutes: 3
 
@@ -100,6 +109,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+
         run: |
           python3 - <<'PY' > /tmp/discord-payload.json
           import json
@@ -110,32 +120,65 @@ jobs:
           repo = os.environ["REPOSITORY"]
 
           workflows = [
-              ("🎓", "HiWi notifier", "check-jobs.yml"),
-              ("🏠", "Living notifier", "check-living.yml"),
+              (
+                  "🎓",
+                  "TUM HiWi notifier",
+                  "check-jobs.yml",
+              ),
+              (
+                  "🏠",
+                  "TUM Living notifier",
+                  "check-living.yml",
+              ),
+              (
+                  "🚀",
+                  "Isar Aerospace notifier",
+                  "check-isar.yml",
+              ),
           ]
 
           def latest_run(workflow_file):
               cmd = [
                   "gh",
                   "api",
-                  f"/repos/{repo}/actions/workflows/"
-                  f"{workflow_file}/runs?per_page=1",
+                  (
+                      f"/repos/{repo}/actions/workflows/"
+                      f"{workflow_file}/runs?per_page=1"
+                  ),
               ]
-              raw = subprocess.check_output(cmd, text=True)
+
+              raw = subprocess.check_output(
+                  cmd,
+                  text=True,
+              )
+
               payload = json.loads(raw)
-              runs = payload.get("workflow_runs", [])
+
+              runs = payload.get(
+                  "workflow_runs",
+                  [],
+              )
+
               return runs[0] if runs else None
+
 
           def pretty_time(value):
               if not value:
                   return "Unknown"
 
               dt = datetime.fromisoformat(
-                  value.replace("Z", "+00:00")
+                  value.replace(
+                      "Z",
+                      "+00:00",
+                  )
               )
-              return dt.astimezone(timezone.utc).strftime(
+
+              return dt.astimezone(
+                  timezone.utc
+              ).strftime(
                   "%Y-%m-%d %H:%M UTC"
               )
+
 
           fields = []
           all_healthy = True
@@ -145,11 +188,13 @@ jobs:
 
               if not run:
                   all_healthy = False
+
                   fields.append({
                       "name": f"{icon} {label}",
                       "value": "⚪ No workflow runs found",
                       "inline": False,
                   })
+
                   continue
 
               conclusion = (
@@ -157,18 +202,41 @@ jobs:
                   or run.get("status")
                   or "unknown"
               )
-              run_url = run.get("html_url", "")
-              created_at = pretty_time(run.get("created_at"))
-              event = run.get("event", "unknown")
 
-              healthy = conclusion == "success"
-              all_healthy = all_healthy and healthy
-              marker = "🟢" if healthy else "🔴"
+              run_url = run.get(
+                  "html_url",
+                  "",
+              )
+
+              created_at = pretty_time(
+                  run.get("created_at")
+              )
+
+              event = run.get(
+                  "event",
+                  "unknown",
+              )
+
+              healthy = (
+                  conclusion == "success"
+              )
+
+              all_healthy = (
+                  all_healthy
+                  and healthy
+              )
+
+              marker = (
+                  "🟢"
+                  if healthy
+                  else "🔴"
+              )
 
               fields.append({
                   "name": f"{icon} {label}",
                   "value": (
-                      f"{marker} **{conclusion.upper()}**\n"
+                      f"{marker} "
+                      f"**{conclusion.upper()}**\n"
                       f"Last run: {created_at}\n"
                       f"Trigger: `{event}`\n"
                       f"[Open run]({run_url})"
@@ -176,32 +244,45 @@ jobs:
                   "inline": False,
               })
 
-          now = datetime.now(timezone.utc).strftime(
+          now = datetime.now(
+              timezone.utc
+          ).strftime(
               "%Y-%m-%d %H:%M UTC"
           )
 
+          if all_healthy:
+              title = (
+                  "💚 Notifiers — Daily Status"
+              )
+
+              description = (
+                  "All monitoring workflows are healthy."
+              )
+          else:
+              title = (
+                  "⚠️ Notifiers — Daily Status"
+              )
+
+              description = (
+                  "At least one monitoring workflow "
+                  "needs attention."
+              )
+
           payload = {
-              "username": "TUM Notifier Monitor",
+              "username": "Notifier Monitor",
               "embeds": [{
-                  "title": (
-                      "💚 TUM Notifiers — Daily Status"
-                      if all_healthy
-                      else "⚠️ TUM Notifiers — Daily Status"
-                  ),
-                  "description": (
-                      "Both monitoring workflows are healthy."
-                      if all_healthy
-                      else (
-                          "At least one monitoring workflow "
-                          "needs attention."
-                      )
-                  ),
+                  "title": title,
+                  "description": description,
                   "fields": fields,
                   "footer": {
-                      "text": f"Heartbeat generated {now}"
+                      "text": (
+                          f"Heartbeat generated {now}"
+                      )
                   },
               }],
-              "allowed_mentions": {"parse": []},
+              "allowed_mentions": {
+                  "parse": []
+              },
           }
 
           print(json.dumps(payload))
@@ -210,9 +291,10 @@ jobs:
       - name: Send combined Discord heartbeat
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_STATUS }}
+
         run: |
           curl --fail-with-body --silent --show-error \
             -H "Content-Type: application/json" \
-            -H "User-Agent: TUM-Notifier-Monitor/1.0" \
+            -H "User-Agent: Notifier-Monitor/1.0" \
             --data-binary @/tmp/discord-payload.json \
             "${DISCORD_WEBHOOK_URL}?wait=true"
