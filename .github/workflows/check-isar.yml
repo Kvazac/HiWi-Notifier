@@ -1,0 +1,80 @@
+name: Check Isar Aerospace student jobs
+
+on:
+  schedule:
+    - cron: "11,41 * * * *"
+
+  workflow_dispatch:
+    inputs:
+      send_test_notification:
+        description: "Send only a Discord test notification"
+        required: false
+        default: false
+        type: boolean
+
+      send_test_listing:
+        description: "Fetch and send a real matching job as a test"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: isar-aerospace-job-checker
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send test notification
+        if: ${{ inputs.send_test_notification == true }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_ISAR }}
+        run: python -m isar.main --test-notification
+
+      - name: Send real listing test
+        if: ${{ inputs.send_test_listing == true }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_ISAR }}
+        run: python -m isar.main --test-listing
+
+      - name: Check Isar Aerospace
+        if: >-
+          ${{ inputs.send_test_notification != true &&
+              inputs.send_test_listing != true }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_ISAR }}
+        run: python -m isar.main
+
+      - name: Persist Isar state
+        if: >-
+          ${{ inputs.send_test_notification != true &&
+              inputs.send_test_listing != true }}
+        run: |
+          if git diff --quiet -- data/isar-state.json; then
+            echo "No Isar state changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/isar-state.json
+          git commit -m "chore: update Isar notifier state"
+          git push
