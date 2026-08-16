@@ -1,0 +1,26 @@
+api:
+  board_token: "isaraerospace"
+  timeout_seconds: 30
+
+matching:
+  title_include_any:
+    - "working student"
+    - "werkstudent"
+    - "intern"
+    - "internship"
+    - "praktikant"
+    - "praktikum"
+
+  locations: []
+
+  exclude_any:
+    - "thesis student"
+
+notifications:
+  username: "Isar Aerospace Job Watcher"
+  max_description_characters: 900
+
+state:
+  path: "data/isar-state.json"
+  first_run_mode: "mark_seen"
+  retention_days: 180
