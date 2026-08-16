@@ -1,6 +1,6 @@
 [![Check TUM student jobs](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-jobs.yml/badge.svg)](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-jobs.yml)
 [![Check TUM Living](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-living.yml/badge.svg)](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-living.yml)
-
+[![Check Isar Aerospace student jobs](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-isar.yml/badge.svg)](https://github.com/Kvazac/HiWi-Notifier/actions/workflows/check-isar.yml)
 
 # TUM HiWi Discord Notifier
 
